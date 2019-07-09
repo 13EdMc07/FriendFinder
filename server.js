@@ -10,7 +10,8 @@ app.use(bodyParser.json());
 
 // require("./app/routing/apiRoutes")(app);
 require(path.join(__dirname, "./app/routing/htmlRoutes"))(app);
+require(path.join(__dirname, "./app/routing/apiRoutes"))(app);
 
 app.listen(port, function(){
-    console.log('appListening on port' + port);
+    console.log('appListening on port ' + port);
 });

@@ -165,10 +165,15 @@
         </div>
         </div>
       </div>
-    </footer>
+    </footer> 
   </div>
 </body>
 <script type= "text/javascript">
+
+$("#btnClose").on("click", function(e){
+    e.preventDefault() 
+    document.getElementById("modal1").style.display = "none";
+  });
 
 $("#submitBtn").on("click", function(e){
     e.preventDefault() 
@@ -177,13 +182,99 @@ $("#submitBtn").on("click", function(e){
         photo: $("#friendPhoto").val().trim(),
         scores: [
             $("#q1").val(),
+            $("#q2").val(),
+            $("#q3").val(),
+            $("#q4").val(),
+            $("#q5").val(),
+            $("#q6").val(),
+            $("#q7").val(),
+            $("#q8").val(),
+            $("#q9").val(),
+            $("#q10").val()
         ]
 
     }
-    console.log(newFriend)
-})
+    console.log("Trying to create a new friend: " + JSON.stringify(newFriend, null, 2));
+    suggestAFriend(newFriend);
+});
 
+function createFriend(newFriend){
+  console.log("createFriend()");
+  // Post newFriend object into databse using a post call to /api/friends
+  $.post("/api/friends", newFriend, function(result){
+    console.log("result: " + result);
+  });
+}
 
+function suggestAFriend(newFriend){
+  console.log("Suggesting a friend...");
+  // Determine totalDifference for this set of scores
+  // Determine the user's most compatible friend using the following as a guide:
+
+  //  * Convert each user's results into a simple array of numbers (ex: `[5, 1, 4, 4, 5, 1, 2, 5, 4, 1]`).
+  //  * With that done, compare the difference between current user's scores against those from other users, 
+  // question by question. Add up the differences to calculate the `totalDifference`.
+  //    * Example:
+  //      * User 1: `[5, 1, 4, 4, 5, 1, 2, 5, 4, 1]`
+  //      * User 2: `[3, 2, 6, 4, 5, 1, 2, 5, 4, 1]`
+  //      * Total Difference: **2 + 1 + 2 =** **_5_**
+  //  * Remember to use the absolute value of the differences. Put another way: no negative solutions! Your app should calculate both `5-3` and `3-5` as `2`, and so on.
+  //  * The closest match will be the user with the least amount of difference.
+  // Comparing scores to every set of scores in the database
+  // Pull in the database
+  var scores = newFriend.scores;
+
+  $.get("/api/friends", function(data, status){
+    // alert("Data: " + data + "\nStatus: " + status);
+    var friends = JSON.stringify(data, null, 2);
+    console.log("friends from api call: " + friends);
+
+    if(data.length > 0){
+      let closest_match = 0;
+      let lowest_score = 1000;
+        for (let i = 0; i < data.length; i++) {
+            if(data[i].scores && data[i].scores.length > 0 ){
+                let curr_scores = data[i].scores;
+                // calculate score here
+                let diff = getDifferenceInScore(curr_scores, scores);
+                if(diff < lowest_score){
+                    lowest_score = diff;
+                    closest_match = i;
+                }
+            }
+        }
+        console.log("Suggesting friend " + data[closest_match].name);
+        showSuggestedFriend(data[closest_match]);
+    }
+    createFriend(newFriend);
+      });
+    }
+
+function getDifferenceInScore(score_1, score_2){
+        let sum = 0;
+        for (let i = 0; i < score_1.length; i++) {
+            let num_1 = Number(score_1[i]);
+            let num_2 = Number(score_2[i]);
+            let diff = num_1 - num_2;
+            if(diff < 0){
+                sum += - diff;
+            }else {
+                sum +=  diff;
+            }
+        }
+        return sum;
+    }
+
+    function showSuggestedFriend(friend){
+      let name = friend.name;
+      let photo = friend.photo;
+      let name_element = document.getElementById("matchName");
+      let photo_element = document.getElementById("matchPic");
+
+      name_element.innerHTML = name;
+      photo_element.src= photo;
+      document.getElementById("modal1").style.display = "block";
+    }
 
 </script>
 </html>
